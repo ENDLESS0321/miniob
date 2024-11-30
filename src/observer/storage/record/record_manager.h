@@ -125,7 +125,10 @@ private:
 class RecordPageHandler
 {
 public:
-  RecordPageHandler(StorageFormat storage_format) : storage_format_(storage_format) {}
+  RecordPageHandler(StorageFormat storage_format) : storage_format_(storage_format) {
+    page_header_ = new PageHeader();
+    frame_      = new Frame();
+    }
   virtual ~RecordPageHandler();
   static RecordPageHandler *create(StorageFormat format);
 

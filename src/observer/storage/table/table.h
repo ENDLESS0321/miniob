@@ -76,7 +76,7 @@ public:
     * @param attribute_name 字段名
     * @param values 字段值
     */
-  RC update_record(Trx *trx, Record *record, const char *attribute_name, const Value *values);
+  RC update_record(Record *record, const char *attribute_name, const Value *values);
 
   /**
    * @brief 根据给定的字段生成一个记录/行

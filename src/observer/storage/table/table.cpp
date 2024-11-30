@@ -21,6 +21,7 @@ See the Mulan PSL v2 for more details. */
 #include "common/lang/algorithm.h"
 #include "common/log/log.h"
 #include "common/global_context.h"
+#include "common/types.h"
 #include "storage/db/db.h"
 #include "storage/buffer/disk_buffer_pool.h"
 #include "storage/common/condition_filter.h"
@@ -231,9 +232,8 @@ RC Table::remove(const char *name){
   return RC::SUCCESS;
 }
 
-RC Table::update_record(Trx *trx, Record *record, const char *attribute_name, const Value *values)
+RC Table::update_record(Record *record, const char *attribute_name, const Value *values)
 {
-  
   LOG_INFO("Begin to update record. table name=%s, attribute name=%s", table_meta_.name(), attribute_name);
   
   RC rc = RC::SUCCESS;
@@ -424,6 +424,8 @@ RC Table::init_record_handler(const char *base_dir)
   }
 
   record_handler_ = new RecordFileHandler(table_meta_.storage_format());
+
+  record_page_handler_ = new RowRecordPageHandler();
 
   rc = record_handler_->init(*data_buffer_pool_, db_->log_handler(), &table_meta_);
   if (rc != RC::SUCCESS) {
