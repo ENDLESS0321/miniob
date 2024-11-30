@@ -14,6 +14,7 @@ See the Mulan PSL v2 for more details. */
 
 #pragma once
 
+#include "storage/record/record_manager.h"
 #include "storage/table/table_meta.h"
 #include "common/types.h"
 #include "common/lang/span.h"
@@ -60,6 +61,22 @@ public:
    * @param base_dir 表所在的文件夹，表记录数据文件、索引数据文件存放位置
    */
   RC open(Db *db, const char *meta_file, const char *base_dir);
+
+  /**
+   * 删除一个表
+   * @param table_name 表名
+   */
+  RC remove(const char *table_name);
+
+  /**
+    * @brief 更新一条记录
+    * @details 通过事务来更新一条记录，这里只是更新记录，不涉及索引的更新。
+    * @param trx 事务
+    * @param record 记录
+    * @param attribute_name 字段名
+    * @param values 字段值
+    */
+  RC update_record(Trx *trx, Record *record, const char *attribute_name, const Value *values);
 
   /**
    * @brief 根据给定的字段生成一个记录/行
@@ -128,5 +145,6 @@ private:
   TableMeta          table_meta_;
   DiskBufferPool    *data_buffer_pool_ = nullptr;  /// 数据文件关联的buffer pool
   RecordFileHandler *record_handler_   = nullptr;  /// 记录操作
+  RowRecordPageHandler *record_page_handler_ = nullptr;  /// 记录页面操作
   vector<Index *>    indexes_;
 };
