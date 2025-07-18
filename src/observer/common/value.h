@@ -35,7 +35,7 @@ public:
   friend class BooleanType;
   friend class CharType;
   friend class VectorType;
-
+  friend class DateType;
   Value() = default;
 
   ~Value() { reset(); }
@@ -90,6 +90,8 @@ public:
   void set_data(const char *data, int length) { this->set_data(const_cast<char *>(data), length); }
   void set_value(const Value &value);
   void set_boolean(bool val);
+  void set_date(const char *s);  // 从 "YYYY-MM-DD" 格式的日期字符串创建 Value
+  void set_date(int val);        // 从 YYYYMMDD 格式的整数创建 Value
 
   string to_string() const;
 

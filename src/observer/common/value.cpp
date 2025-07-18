@@ -107,6 +107,33 @@ void Value::reset()
   own_data_  = false;
 }
 
+void Value::set_date(const char *s)
+{
+  reset();
+  attr_type_        = AttrType::DATES;
+  string date       = s;
+  string            dates;  // 存储分割好的日期字符串
+  std::stringstream ss(date);
+  std::string       part;
+  while (std::getline(ss, part, '-')) {
+    if (part.length() == 1) {
+      dates += "0" + part;
+    } else {
+      dates += part;
+    }
+  }
+  value_.int_value_ = atoi(dates.c_str());
+  length_           = sizeof(value_.int_value_);
+}
+
+void Value::set_date(int val)
+{
+  reset();
+  attr_type_        = AttrType::DATES;
+  value_.int_value_ = val;
+  length_           = sizeof(val);
+}
+
 void Value::set_data(char *data, int length)
 {
   switch (attr_type_) {
@@ -124,6 +151,10 @@ void Value::set_data(char *data, int length)
     case AttrType::BOOLEANS: {
       value_.bool_value_ = *(int *)data != 0;
       length_            = length;
+    } break;
+    case AttrType::DATES: {
+      value_.int_value_ = *(int *)data;
+      length_ = length;
     } break;
     default: {
       LOG_WARN("unknown data type: %d", attr_type_);
