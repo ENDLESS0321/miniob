@@ -78,8 +78,8 @@ extern int yydebug;
     TRX_ROLLBACK = 279,            /* TRX_ROLLBACK  */
     INT_T = 280,                   /* INT_T  */
     STRING_T = 281,                /* STRING_T  */
-    DATE_T = 282,                  /* DATE_T  */
-    FLOAT_T = 283,                 /* FLOAT_T  */
+    FLOAT_T = 282,                 /* FLOAT_T  */
+    DATE_T = 283,                  /* DATE_T  */
     VECTOR_T = 284,                /* VECTOR_T  */
     HELP = 285,                    /* HELP  */
     EXIT = 286,                    /* EXIT  */
@@ -107,7 +107,8 @@ extern int yydebug;
     FLOAT = 308,                   /* FLOAT  */
     ID = 309,                      /* ID  */
     SSS = 310,                     /* SSS  */
-    UMINUS = 311                   /* UMINUS  */
+    DATE_STR = 311,                /* DATE_STR  */
+    UMINUS = 312                   /* UMINUS  */
   };
   typedef enum yytokentype yytoken_kind_t;
 #endif
@@ -135,7 +136,7 @@ union YYSTYPE
   int                                        number;
   float                                      floats;
 
-#line 139 "yacc_sql.hpp"
+#line 140 "yacc_sql.hpp"
 
 };
 typedef union YYSTYPE YYSTYPE;

@@ -46,7 +46,7 @@ public:
   explicit Value(float val);
   explicit Value(bool val);
   explicit Value(const char *s, int len = 0);
-
+  explicit Value(int val, bool isDate);
   Value(const Value &other);
   Value(Value &&other);
 
@@ -85,14 +85,12 @@ public:
     return DataType::type_instance(value.attr_type())->cast_to(value, to_type, result);
   }
 
-  void set_type(AttrType type) { this->attr_type_ = type; }
-  void set_data(char *data, int length);
-  void set_data(const char *data, int length) { this->set_data(const_cast<char *>(data), length); }
-  void set_value(const Value &value);
-  void set_boolean(bool val);
-  void set_date(const char *s);  // 从 "YYYY-MM-DD" 格式的日期字符串创建 Value
-  void set_date(int val);        // 从 YYYYMMDD 格式的整数创建 Value
-
+  void   set_type(AttrType type) { this->attr_type_ = type; }
+  void   set_data(char *data, int length);
+  void   set_data(const char *data, int length) { this->set_data(const_cast<char *>(data), length); }
+  void   set_value(const Value &value);
+  void   set_boolean(bool val);
+  void   set_date(int val);
   string to_string() const;
 
   int compare(const Value &other) const;
