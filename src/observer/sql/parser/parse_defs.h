@@ -248,6 +248,7 @@ struct ErrorSqlNode
   std::string error_msg;
   int         line;
   int         column;
+  bool        flag;
 };
 
 /**
@@ -264,7 +265,6 @@ enum SqlCommandFlag
   SCF_DELETE,
   SCF_CREATE_TABLE,
   SCF_DROP_TABLE,
-  SCF_SHOW_INDEX,
   SCF_CREATE_INDEX,
   SCF_DROP_INDEX,
   SCF_SYNC,

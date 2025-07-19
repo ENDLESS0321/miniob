@@ -11,7 +11,6 @@ int DateType::compare(const Value &left, const Value &right) const
   ASSERT(left.attr_type() == AttrType::DATES && right.attr_type() == AttrType::DATES, "Invalid type");
   return common::compare_int((void *)&left.value_.int_value_, (void *)&right.value_.int_value_);
 }
-
 RC DateType::add(const Value &left, const Value &right, Value &result) const { return RC::UNSUPPORTED; }
 
 RC DateType::subtract(const Value &left, const Value &right, Value &result) const { return RC::UNSUPPORTED; }
@@ -46,8 +45,6 @@ RC DateType::to_string(const Value &val, string &result) const
 {
   int               date_int = val.get_int();
   std::stringstream ss;
-  // setw ：需要填充多少个字符,默认填充的字符为' '空格。
-  // setfill：设置std::setw将填充什么样的字符
   ss << std::setw(4) << std::setfill('0') << date_int / 10000 << "-" << std::setw(2) << std::setfill('0')
      << (date_int / 100 % 100) << "-" << std::setw(2) << std::setfill('0') << (date_int % 100);
   result = ss.str();
