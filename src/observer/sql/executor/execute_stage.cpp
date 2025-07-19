@@ -33,7 +33,10 @@ RC ExecuteStage::handle_request(SQLStageEvent *sql_event)
 {
   RC rc = RC::SUCCESS;
 
+  // unique_ptr 是独有的指针，只能有一个指针指向它
   const unique_ptr<PhysicalOperator> &physical_operator = sql_event->physical_operator();
+  
+  // 如果物理算子不为空，就用物理算子处理请求
   if (physical_operator != nullptr) {
     return handle_request_with_physical_operator(sql_event);
   }

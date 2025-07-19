@@ -14,11 +14,12 @@ See the Mulan PSL v2 for more details. */
 
 #include "sql/stmt/update_stmt.h"
 #include "common/log/log.h"
+#include "sql/stmt/filter_stmt.h"
 #include "storage/db/db.h"
 #include "storage/table/table.h"
 
-UpdateStmt::UpdateStmt(Table *table, const char *attr_name, const Value *value, FilterStmt *filter_stmt)
-    : table_(table), value_(value), attr_name_(attr_name), filter_stmt_(filter_stmt)
+UpdateStmt::UpdateStmt(Table *table, Value *values, int value_amount, FilterStmt *filter_stmt, FieldMeta *field_meta)
+    : table_(table), values_(values), value_amount_(value_amount), filter_stmt_(filter_stmt), field_meta_(field_meta)
 {}
 
 UpdateStmt::~UpdateStmt()
@@ -36,27 +37,31 @@ RC UpdateStmt::create(Db *db, const UpdateSqlNode &update, Stmt *&stmt)
     LOG_WARN("invalid argument. db=%p, table_name=%p", db, table_name);
     return RC::INVALID_ARGUMENT;
   }
+
   // check whether the table exists
   Table *table = db->find_table(table_name);
   if (nullptr == table) {
     LOG_WARN("no such table. db=%s, table_name=%s", db->name(), table_name);
     return RC::SCHEMA_TABLE_NOT_EXIST;
   }
-  const char      *field_name = update.attribute_name.c_str();
-  const FieldMeta *field_meta = table->table_meta().field(field_name);
+
+  FieldMeta *field_meta = (FieldMeta *)table->table_meta().field(update.attribute_name.c_str());
   if (nullptr == field_meta) {
-    LOG_WARN("no such field. field=%s.%s.%s", db->name(), table->name(), field_name);
-    return RC::SCHEMA_FIELD_MISSING;
+    LOG_WARN("no such field in table. db=%s, table=%s, field name=%s", 
+             db->name(), table_name, update.attribute_name.c_str());
+    return RC::SCHEMA_FIELD_NOT_EXIST;
   }
+
   std::unordered_map<std::string, Table *> table_map;
   table_map.insert(std::pair<std::string, Table *>(std::string(table_name), table));
+
   FilterStmt *filter_stmt = nullptr;
-  RC          rc = FilterStmt::create(db, table, &table_map, update.conditions.data(), static_cast<int>(update.conditions.size()), filter_stmt);
+  RC          rc          = FilterStmt::create(
+      db, table, &table_map, update.conditions.data(), static_cast<int>(update.conditions.size()), filter_stmt);
   if (rc != RC::SUCCESS) {
     LOG_WARN("failed to create filter statement. rc=%d:%s", rc, strrc(rc));
     return rc;
   }
-  // everything alright
-  stmt = new UpdateStmt(table, field_name, &(update.value), filter_stmt);
+  stmt = new UpdateStmt(table, (Value *)&update.value, 1, filter_stmt, field_meta);
   return RC::SUCCESS;
 }

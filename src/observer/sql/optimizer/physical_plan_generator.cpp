@@ -258,25 +258,48 @@ RC PhysicalPlanGenerator::create_plan(InsertLogicalOperator &insert_oper, unique
   return RC::SUCCESS;
 }
 
-RC PhysicalPlanGenerator::create_plan(UpdateLogicalOperator &update_oper, unique_ptr<PhysicalOperator> &oper)
+// RC PhysicalPlanGenerator::create_plan(UpdateLogicalOperator &update_oper, unique_ptr<PhysicalOperator> &oper)
+// {
+//   vector<unique_ptr<LogicalOperator>> &child_opers = update_oper.children();
+
+//   unique_ptr<PhysicalOperator> child_physical_oper;
+
+//   RC rc = RC::SUCCESS;
+//   if (!child_opers.empty()) {
+//     LogicalOperator *child_oper = child_opers.front().get();
+
+//     rc = create(*child_oper, child_physical_oper);
+//     if (rc != RC::SUCCESS) {
+//       LOG_WARN("failed to create physical operator. rc=%s", strrc(rc));
+//       return rc;
+//     }
+//   }
+
+//   oper = unique_ptr<PhysicalOperator>(new UpdatePhysicalOperator(update_oper.table(), update_oper.update_stmt()));
+
+//   if (child_physical_oper) {
+//     oper->add_child(std::move(child_physical_oper));
+//   }
+//   return rc;
+// }
+
+RC PhysicalPlanGenerator::create_plan(UpdateLogicalOperator &update_oper, std::unique_ptr<PhysicalOperator> &oper)
 {
   vector<unique_ptr<LogicalOperator>> &child_opers = update_oper.children();
-
-  unique_ptr<PhysicalOperator> child_physical_oper;
-
-  RC rc = RC::SUCCESS;
+  unique_ptr<PhysicalOperator>         child_physical_oper;
+  RC                                   rc = RC::SUCCESS;
   if (!child_opers.empty()) {
     LogicalOperator *child_oper = child_opers.front().get();
-
-    rc = create(*child_oper, child_physical_oper);
+    rc                          = create(*child_oper, child_physical_oper);
     if (rc != RC::SUCCESS) {
       LOG_WARN("failed to create physical operator. rc=%s", strrc(rc));
       return rc;
     }
   }
-
-  oper = unique_ptr<PhysicalOperator>(new UpdatePhysicalOperator(update_oper.table(), update_oper.update_stmt()));
-
+  Table     *table      = update_oper.table();
+  FieldMeta *field_meta = update_oper.fields();
+  Value     *value      = update_oper.values();
+  oper                  = unique_ptr<PhysicalOperator>(new UpdatePhysicalOperator(table, field_meta, value));
   if (child_physical_oper) {
     oper->add_child(std::move(child_physical_oper));
   }

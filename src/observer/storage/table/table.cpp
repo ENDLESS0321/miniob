@@ -232,60 +232,100 @@ RC Table::remove(const char *name){
   return RC::SUCCESS;
 }
 
-RC Table::update_record(Record *record, const char *attribute_name, const Value *values)
-{
-  LOG_INFO("Begin to update record. table name=%s, attribute name=%s", table_meta_.name(), attribute_name);
+// RC Table::update_record(Record *record, const char *attribute_name, const Value *values)
+// {
+//   LOG_INFO("Begin to update record. table name=%s, attribute name=%s", table_meta_.name(), attribute_name);
   
+//   RC rc = RC::SUCCESS;
+//   char *old_data = record->data();
+//   char *now_data = record->data();
+//   const FieldMeta *field = table_meta_.field(attribute_name);
+//   const Value &value = values[0];
+//   //更新值的类型检查，若不符合则不更新
+//   if(field->type()!=value.attr_type()){
+//     LOG_ERROR("Invalid value type. table name =%s, field name=%s, type=%d, but given=%d",
+//     table_meta_.name(),
+//     field->name(),
+//     field->type(),
+//     value.attr_type());
+//     return RC::SCHEMA_FIELD_TYPE_MISMATCH;
+//   }
+//   size_t copy_len = field->len();
+//   if (field->type() == AttrType::CHARS) {
+//     const size_t data_len = strlen((const char *)value.data());
+//     if (copy_len > data_len) {
+//       copy_len = data_len + 1;
+//     }
+//   }
+
+//   LOG_INFO("field offset=%d, copy_len=%d", field->offset(), copy_len);
+
+//   if (now_data == nullptr) {
+//     LOG_ERROR("Invalid record data. table name=%s, field name=%s", table_meta_.name(), attribute_name);
+//     return RC::INTERNAL;
+//   }
+
+//   memcpy(now_data + field->offset(), value.data(), copy_len);
+//   record->set_data(now_data);
+//   rc = record_page_handler_->update_record(record->rid(), record->data());
+//   if (rc != RC::SUCCESS) {
+//     LOG_ERROR("Failed to update record (rid=%d.%d). rc=%d:%s",
+//     record->rid().page_num, record->rid().slot_num, rc, strrc(rc));
+//     return rc;
+//   }
+//   //若行更新成功则维护更新索引
+//   for (Index *index : indexes_) {
+//     LOG_INFO("filed_name of index=%s, attribute_name=%s", index->index_meta().field(), attribute_name);
+//     if(0 == strcmp(index->index_meta().field(), attribute_name)) {
+//       if(RC::SUCCESS==index->insert_entry(record->data(), &record->rid())){
+//         if(RC::SUCCESS==index->delete_entry(old_data, &record->rid())){
+//           LOG_INFO("Succeed to update index (filed_meta=%s) of record(rid=%d.%d). rc=%d:%s",
+//           index->index_meta().field(), record->rid().page_num, record->rid().slot_num, rc, strrc(rc));
+//         }
+//       }
+//     }
+//   }
+//   return rc;
+// }
+
+RC Table::update_record(Record &record, const char *attribute_name, Value *values)
+{
   RC rc = RC::SUCCESS;
-  char *old_data = record->data();
-  char *now_data = record->data();
-  const FieldMeta *field = table_meta_.field(attribute_name);
-  const Value &value = values[0];
-  //更新值的类型检查，若不符合则不更新
-  if(field->type()!=value.attr_type()){
-    LOG_ERROR("Invalid value type. table name =%s, field name=%s, type=%d, but given=%d",
-    table_meta_.name(),
-    field->name(),
-    field->type(),
-    value.attr_type());
-    return RC::SCHEMA_FIELD_TYPE_MISMATCH;
-  }
-  size_t copy_len = field->len();
-  if (field->type() == AttrType::CHARS) {
-    const size_t data_len = strlen((const char *)value.data());
-    if (copy_len > data_len) {
-      copy_len = data_len + 1;
+
+  const int normal_field_start_index = table_meta_.sys_field_num();
+  const int normal_field_num         = table_meta_.field_num() - normal_field_start_index;
+  // 遍历表格的全部域，找到目标域，并获取目标域的offset和length
+  int field_offset = -1;
+  int field_length = -1;
+
+  for (int i = 0; i < normal_field_num && OB_SUCC(rc); i++) {
+    const FieldMeta *field      = table_meta_.field(i + normal_field_start_index);
+    const char      *field_name = field->name();
+    if (field_name == attribute_name) {
+      if (field->type() != values->attr_type()) {
+        // 暂不支持Value::cast_to()
+        LOG_WARN("field type mismatch. table=%s, field=%s, field type=%d, value_type=%d",name(),field_name,field->type(),values->attr_type());
+      }
+      field_offset = field->offset();
+      field_length = field->len();
     }
   }
 
-  LOG_INFO("field offset=%d, copy_len=%d", field->offset(), copy_len);
-
-  if (now_data == nullptr) {
-    LOG_ERROR("Invalid record data. table name=%s, field name=%s", table_meta_.name(), attribute_name);
-    return RC::INTERNAL;
+  if (field_length < 0 || field_offset < 0) {
+    LOG_WARN("field not find ,field name = %s",attribute_name);
+    return RC::SCHEMA_FIELD_NOT_EXIST;
   }
 
-  memcpy(now_data + field->offset(), value.data(), copy_len);
-  record->set_data(now_data);
-  rc = record_page_handler_->update_record(record->rid(), record->data());
+  char *old_data = record.data();  // old_data指向的是frame中的内存
+  memcpy(old_data + field_offset, values->data(), field_length);
+
+  record_handler_->update_record(&record);
   if (rc != RC::SUCCESS) {
-    LOG_ERROR("Failed to update record (rid=%d.%d). rc=%d:%s",
-    record->rid().page_num, record->rid().slot_num, rc, strrc(rc));
+    LOG_ERROR("Failed to update record.rid=%s, table=%s, rc=%s", record.rid().to_string().c_str(), name(), strrc(rc));
     return rc;
   }
-  //若行更新成功则维护更新索引
-  for (Index *index : indexes_) {
-    LOG_INFO("filed_name of index=%s, attribute_name=%s", index->index_meta().field(), attribute_name);
-    if(0 == strcmp(index->index_meta().field(), attribute_name)) {
-      if(RC::SUCCESS==index->insert_entry(record->data(), &record->rid())){
-        if(RC::SUCCESS==index->delete_entry(old_data, &record->rid())){
-          LOG_INFO("Succeed to update index (filed_meta=%s) of record(rid=%d.%d). rc=%d:%s",
-          index->index_meta().field(), record->rid().page_num, record->rid().slot_num, rc, strrc(rc));
-        }
-      }
-    }
-  }
-  return rc;
+
+  return RC::SUCCESS;
 }
 
 RC Table::insert_record(Record &record)

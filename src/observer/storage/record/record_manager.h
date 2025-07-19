@@ -205,6 +205,8 @@ public:
    */
   virtual RC update_record(const RID &rid, const char *data) { return RC::UNIMPLEMENTED; }
 
+  RC update_record(Record *rec);
+
   /**
    * @brief 获取指定位置的记录数据
    *
@@ -374,6 +376,8 @@ public:
    * @brief 关闭，做一些资源清理的工作
    */
   void close();
+
+  RC update_record(Record *rec);
 
   /**
    * @brief 从指定文件中删除指定槽位的记录

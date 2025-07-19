@@ -247,20 +247,20 @@ RC LogicalPlanGenerator::create_plan(InsertStmt *insert_stmt, unique_ptr<Logical
 
 RC LogicalPlanGenerator::create_plan(UpdateStmt *update_stmt, unique_ptr<LogicalOperator> &logical_operator)
 {
+  // 拿到相关变量
   Table                      *table       = update_stmt->table();
   FilterStmt                 *filter_stmt = update_stmt->filter_stmt();
-  const char                 *attr_name   = update_stmt->attr_name();
+  FieldMeta                  *field_meta  = update_stmt->field_meta();
+  Value                      *value       = update_stmt->values();
   unique_ptr<LogicalOperator> table_get_oper(new TableGetLogicalOperator(table, ReadWriteMode::READ_WRITE));
 
   unique_ptr<LogicalOperator> predicate_oper;
-
-  RC rc = create_plan(filter_stmt, predicate_oper);
+  RC                          rc = create_plan(filter_stmt, predicate_oper);
   if (rc != RC::SUCCESS) {
     return rc;
   }
-
-  unique_ptr<LogicalOperator> update_oper(new UpdateLogicalOperator(table, attr_name, update_stmt));
-
+  // 创建逻辑算子
+  unique_ptr<LogicalOperator> update_oper(new UpdateLogicalOperator(table, value, field_meta));
   if (predicate_oper) {
     predicate_oper->add_child(std::move(table_get_oper));
     update_oper->add_child(std::move(predicate_oper));
@@ -271,7 +271,6 @@ RC LogicalPlanGenerator::create_plan(UpdateStmt *update_stmt, unique_ptr<Logical
   logical_operator = std::move(update_oper);
   return rc;
 }
-
 RC LogicalPlanGenerator::create_plan(DeleteStmt *delete_stmt, unique_ptr<LogicalOperator> &logical_operator)
 {
   Table                      *table       = delete_stmt->table();

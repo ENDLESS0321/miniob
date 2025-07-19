@@ -148,7 +148,7 @@ RC MvccTrx::insert_record(Table *table, Record &record)
   return rc;
 }
 
-RC MvccTrx::update_record(Table *table, Record *record, const char *attribute_name, const Value *values)
+RC MvccTrx::update_record(Table *table, Record &record, const char *attribute_name, Value *values)
 {
   // Field begin_field;
   // Field end_field;
@@ -183,8 +183,8 @@ RC MvccTrx::update_record(Table *table, Record *record, const char *attribute_na
 
   // operations_.push_back(Operation(Operation::Type::UPDATE, table, record->rid()));
 
-
-  return RC::SUCCESS;
+  return table->update_record(record, attribute_name, values);
+  // return RC::SUCCESS;
 }
 
 RC MvccTrx::delete_record(Table *table, Record &record)

@@ -328,7 +328,9 @@ int CliServer::serve()
   started_ = true;
 
   SqlTaskHandler task_handler;
+  // 当初始化后且没有退出信号时，处理事件
   while (started_ && !communicator.exit()) {
+    // 处理事件
     rc = task_handler.handle_event(&communicator);
     if (OB_FAIL(rc)) {
       started_ = false;

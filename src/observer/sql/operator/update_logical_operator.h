@@ -1,27 +1,25 @@
 #pragma once
 
-#include "common/value.h"
 #include "sql/operator/logical_operator.h"
-#include "sql/stmt/update_stmt.h"
-#include <vector>
+#include "storage/field/field_meta.h"
 
 /**
- * @brief 逻辑算子，用于执行delete语句
+ * @brief 逻辑算子，用于执行update语句Add commentMore actions
  * @ingroup LogicalOperator
  */
 class UpdateLogicalOperator : public LogicalOperator
 {
 public:
-  UpdateLogicalOperator(Table *table, const char *attr_name, UpdateStmt *update_stmt);
+  UpdateLogicalOperator(Table *table, Value *values,FieldMeta *fields);
   virtual ~UpdateLogicalOperator() = default;
 
   LogicalOperatorType type() const override { return LogicalOperatorType::UPDATE; }
-  Table              *table() const { return table_; }
-  const char *attr_name() const { return attr_name_; }
-  UpdateStmt *update_stmt() const { return update_stmt_; }
-
+  
+  Table     *table() const { return table_; }
+  Value     *values() { return values_; }
+  FieldMeta *fields() { return fields_; }
 private:
   Table *table_ = nullptr;
-  UpdateStmt *update_stmt_ = nullptr;
-  const char *attr_name_;
+  Value     *values_;
+  FieldMeta *fields_;
 };
